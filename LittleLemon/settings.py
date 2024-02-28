@@ -47,8 +47,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt.token_blacklist',
     
 ]
-import sys
-print(sys.modules['django.conf'].settings.INSTALLED_APPS)
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
