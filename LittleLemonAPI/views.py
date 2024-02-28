@@ -1,6 +1,6 @@
 from django.shortcuts import get_object_or_404
 from rest_framework.response import Response
-from rest_framework.decorators import api_view, renderer_classes, throttle_classes
+from rest_framework.decorators import api_view, renderer_classes, throttle_classes, permission_classes
 from .models import MenuItem
 from .serializers import MenuItemSerializer
 from rest_framework import status
@@ -11,7 +11,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import permission_classes
 from rest_framework.throttling  import AnonRateThrottle, UserRateThrottle
 from .throttles import TenCallsPerMinute
-
+from rest_framework.permissions import IsAdminUser
 
 
 # class SingleItemMenuView(generics.RetrieveUpdateAPIView, generics.DestroyAPIView):
@@ -113,3 +113,20 @@ class MenuItemsViewSet(viewsets.ModelViewSet):
         else:
             throttle_classes = [AnonRateThrottle]
         return [throttle() for throttle in throttle_classes]
+
+from django.contrib.auth.models import User, Group
+@api_view(['POST','DELETE'])
+@permission_classes([IsAdminUser])
+def managers(request):
+    username = request.data['username']
+    print(username)
+    if username:
+        user = get_object_or_404(User,username=username)
+        managers = Group.objects.get(name="Manager")
+        if request.method == 'POST':
+            managers.user_set.add(user)
+        elif request.method == 'DELETE':
+            managers.user_set.remove(user)
+        return Response({'message':'ok'})
+    
+    return Response({"message":"error"},status.HTTP_400_BAD_REQUEST)

@@ -19,5 +19,6 @@ urlpatterns = [
     # menu-items endpoints above are commented out to avoid conflicts
     path('menu-items',views.MenuItemsViewSet.as_view({'get':'list', 'post':'create'})),
     path('menu-items/<int:pk>',views.MenuItemsViewSet.as_view({'get':'retrieve'})),   
+    path('groups/manager/users/',views.managers),
     
 ]
