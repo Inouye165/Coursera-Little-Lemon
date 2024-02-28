@@ -1,13 +1,17 @@
 from django.shortcuts import get_object_or_404
 from rest_framework.response import Response
-from rest_framework.decorators import api_view, renderer_classes
+from rest_framework.decorators import api_view, renderer_classes, throttle_classes
 from .models import MenuItem
 from .serializers import MenuItemSerializer
 from rest_framework import status
 #from rest_framework import generics
 
-
 from rest_framework.request import Request 
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.decorators import permission_classes
+from rest_framework.throttling  import AnonRateThrottle, UserRateThrottle
+from .throttles import TenCallsPerMinute
+
 
 
 # class SingleItemMenuView(generics.RetrieveUpdateAPIView, generics.DestroyAPIView):
@@ -68,3 +72,45 @@ def category_detail(request, pk):
     serialized_category = CategorySerializer(category)
     return Response(serialized_category.data)    
  
+ # Lesson on tokens 2-26-2024 1203
+ 
+@api_view()
+@permission_classes([IsAuthenticated])
+def secret(request):
+    return Response({"message":"Some secret message"})
+ 
+@api_view()
+@permission_classes([IsAuthenticated])
+def manager_view(request):
+    if request.user.groups.filter(name='Manager').exists():
+        return Response({"message":"Only a manager should see this"})
+    else:
+        return Response({"message":"You are not authorized"}, 403)
+
+@api_view()
+@throttle_classes([AnonRateThrottle])
+def throttle_check(request):
+    return Response({'message':'Successful'})
+
+
+@api_view()
+@permission_classes([IsAuthenticated])
+@throttle_classes([TenCallsPerMinute])
+def throttle_check_auth(request):
+    return Response({'message':'Message for logged in users only'})
+
+from rest_framework.response import Response 
+from rest_framework import viewsets 
+from .models import MenuItem 
+from .serializers import MenuItemSerializer
+class MenuItemsViewSet(viewsets.ModelViewSet):
+    throttle_classes = [AnonRateThrottle, UserRateThrottle]
+    queryset = MenuItem.objects.all()
+    serializer_class = MenuItemSerializer
+    # print('self action', self.action)
+    def get_throttles(self):
+        if self.action == 'create':
+            throttle_classes = [UserRateThrottle]
+        else:
+            throttle_classes = [AnonRateThrottle]
+        return [throttle() for throttle in throttle_classes]
