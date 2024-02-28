@@ -107,7 +107,6 @@ class MenuItemsViewSet(viewsets.ModelViewSet):
     throttle_classes = [AnonRateThrottle, UserRateThrottle]
     queryset = MenuItem.objects.all()
     serializer_class = MenuItemSerializer
-    # print('self action', self.action)
     def get_throttles(self):
         if self.action == 'create':
             throttle_classes = [UserRateThrottle]
